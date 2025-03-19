@@ -7,6 +7,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// ✅ Ruta de prueba para ver si el servidor está funcionando
+app.get("/", (req, res) => {
+    res.send("🚀 Servidor funcionando correctamente");
+});
+
+// 🟢 Endpoint de Scraping
 app.post("/scrape", async (req, res) => {
     const { url } = req.body;
 
@@ -20,19 +26,16 @@ app.post("/scrape", async (req, res) => {
         await page.goto(url, { waitUntil: "domcontentloaded" });
 
         const data = await page.evaluate(() => {
-            // Intentamos encontrar el título en cualquiera de las clases posibles
             let title =
                 document.querySelector(".sc-6ab2981a-2 span")?.innerText || 
                 document.querySelector(".sc-e612944f-4")?.innerText ||
                 "No encontrado";
 
-            // Intentamos encontrar la bajada en cualquiera de las clases posibles
             let bajada =
                 document.querySelector(".sc-c214f8c1-16")?.innerText || 
                 document.querySelector(".sc-2af63f48-19")?.innerText ||
                 "No encontrado";
 
-            // Capturamos el link de la página
             const link = window.location.href;
 
             return { title, bajada, link };
@@ -45,6 +48,7 @@ app.post("/scrape", async (req, res) => {
     }
 });
 
+// 🟢 Exportar a Excel
 app.post("/export-excel", (req, res) => {
     const { data } = req.body;
 
@@ -52,7 +56,6 @@ app.post("/export-excel", (req, res) => {
         return res.status(400).json({ error: "No hay datos para exportar" });
     }
 
-    // Crear estructura con múltiples columnas
     const headers = ["", ...data.map((item) => item.nota)];
     const rows = [
         ["TITULO", ...data.map((item) => item.title)],
@@ -70,5 +73,6 @@ app.post("/export-excel", (req, res) => {
     res.download(filePath);
 });
 
-const PORT = 5000;
+// 🟢 Ajustamos el puerto para Render
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Servidor corriendo en http://localhost:${PORT}`));
