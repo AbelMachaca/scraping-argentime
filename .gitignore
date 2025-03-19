@@ -1,0 +1,44 @@
+# Node modules (dependencias instaladas)
+node_modules/
+  
+# Archivos de entorno (configuraciones sensibles)
+.env
+.env.local
+.env.*.local
+  
+# Caché y logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+  
+# Salida de build (si usas TypeScript o transpilas código)
+dist/
+build/
+  
+# Configuración de editores (si usas VSCode o WebStorm)
+.vscode/
+.idea/
+*.iml
+
+# Caché de TypeScript
+*.tsbuildinfo
+
+# Archivos de testing y cobertura
+coverage/
+.jest/
+.nyc_output/
+  
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Archivos generados por el sistema operativo
+.DS_Store
+Thumbs.db
+
+# Dependencias empaquetadas (si usas package managers como npm o yarn)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
