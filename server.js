@@ -1,18 +1,21 @@
 const express = require("express");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-extra");
+const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const cors = require("cors");
 const xlsx = require("xlsx");
+
+puppeteer.use(StealthPlugin());
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// ✅ Ruta de prueba
+// ✅ Ruta de prueba para ver si el servidor está funcionando
 app.get("/", (req, res) => {
-    res.send("🚀 Servidor funcionando correctamente en Render");
+    res.send("🚀 Servidor funcionando correctamente");
 });
 
-// ✅ Scraping con opciones ajustadas para Render
+// 🟢 Endpoint de Scraping
 app.post("/scrape", async (req, res) => {
     const { url } = req.body;
 
@@ -22,13 +25,14 @@ app.post("/scrape", async (req, res) => {
 
     try {
         const browser = await puppeteer.launch({
-            headless: true,
+            headless: "new",
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
                 "--disable-dev-shm-usage",
                 "--disable-gpu",
-                "--no-zygote"
+                "--disable-software-rasterizer",
+                "--disable-features=site-per-process",
             ],
         });
 
@@ -54,11 +58,35 @@ app.post("/scrape", async (req, res) => {
         await browser.close();
         res.json(data);
     } catch (error) {
-        console.error("❌ Error en Puppeteer:", error);
         res.status(500).json({ error: "Error al obtener datos", details: error.message });
     }
 });
 
-// ✅ Ajustamos el puerto para Render
+// 🟢 Exportar a Excel
+app.post("/export-excel", (req, res) => {
+    const { data } = req.body;
+
+    if (!data || data.length === 0) {
+        return res.status(400).json({ error: "No hay datos para exportar" });
+    }
+
+    const headers = ["", ...data.map((item) => item.nota)];
+    const rows = [
+        ["TITULO", ...data.map((item) => item.title)],
+        ["BAJADA", ...data.map((item) => item.bajada)],
+        ["LINK Y CTA", ...data.map((item) => item.link)],
+    ];
+
+    const ws = xlsx.utils.aoa_to_sheet([headers, ...rows]);
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, ws, "Datos");
+
+    const filePath = "data.xlsx";
+    xlsx.writeFile(wb, filePath);
+
+    res.download(filePath);
+});
+
+// 🟢 Ajustamos el puerto
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Servidor corriendo en http://localhost:${PORT}`));
