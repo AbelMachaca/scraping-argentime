@@ -9,7 +9,9 @@ const xlsx = require("xlsx");
 const stealthPlugin = StealthPlugin();
 stealthPlugin.enabledEvasions.delete("chrome.app");
 stealthPlugin.enabledEvasions.delete("chrome.csi");
+stealthPlugin.enabledEvasions.delete("chrome.loadTimes");
 puppeteer.use(stealthPlugin);
+
 
 const app = express();
 app.use(express.json());
