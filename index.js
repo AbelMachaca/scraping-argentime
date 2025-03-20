@@ -1,18 +1,24 @@
 const express = require("express");
+const cors = require("cors");
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-const cors = require("cors");
 const xlsx = require("xlsx");
 
 puppeteer.use(StealthPlugin());
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// 🟢 Configurar CORS para permitir peticiones desde tu frontend
+app.use(cors({
+    origin: "*", // Permite todas las URLs
+    methods: ["GET", "POST"], // Métodos permitidos
+    allowedHeaders: ["Content-Type"] // Cabeceras permitidas
+}));
 
 // ✅ Ruta de prueba para ver si el servidor está funcionando
 app.get("/", (req, res) => {
-    res.send("🚀 Servidor funcionando correctamente");
+    res.send("🚀 Servidor funcionando correctamente con CORS habilitado");
 });
 
 // 🟢 Endpoint de Scraping
@@ -26,14 +32,7 @@ app.post("/scrape", async (req, res) => {
     try {
         const browser = await puppeteer.launch({
             headless: "new",
-            args: [
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-gpu",
-                "--disable-software-rasterizer",
-                "--disable-features=site-per-process",
-            ],
+            args: ["--no-sandbox", "--disable-setuid-sandbox"],
         });
 
         const page = await browser.newPage();
@@ -87,5 +86,5 @@ app.post("/export-excel", (req, res) => {
     res.download(filePath);
 });
 
-// 🟢 Ajustamos el puerto
+// 🟢 Exportamos la app para Vercel
 module.exports = app;
