@@ -6,12 +6,15 @@ const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const xlsx = require("xlsx");
 
 // Inicializamos el plugin stealth y desactivamos las evasiones problemáticas
-const stealthPlugin = StealthPlugin();
-stealthPlugin.enabledEvasions.delete("chrome.app");
-stealthPlugin.enabledEvasions.delete("chrome.csi");
-stealthPlugin.enabledEvasions.delete("chrome.loadTimes");
-puppeteer.use(stealthPlugin);
-
+const stealthPlugin = StealthPlugin({
+    enabledEvasions: new Set([
+      "user-agent-override",
+      "navigator.languages",
+      "navigator.webdriver"
+    ])
+  });
+  puppeteer.use(stealthPlugin);
+  
 
 const app = express();
 app.use(express.json());
