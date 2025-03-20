@@ -1,20 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const puppeteer = require("puppeteer-extra");
+const puppeteer = require("puppeteer"); // Usamos la versión base de Puppeteer
 const chromium = require("chrome-aws-lambda");
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const xlsx = require("xlsx");
-
-// Inicializamos el plugin stealth y desactivamos las evasiones problemáticas
-const stealthPlugin = StealthPlugin({
-    enabledEvasions: new Set([
-      "user-agent-override",
-      "navigator.languages",
-      "navigator.webdriver"
-    ])
-  });
-  puppeteer.use(stealthPlugin);
-  
 
 const app = express();
 app.use(express.json());
@@ -28,9 +16,7 @@ app.use(
 
 // Ruta de prueba
 app.get("/", (req, res) => {
-  res.send(
-    "🚀 Servidor funcionando correctamente con CORS y chrome-aws-lambda"
-  );
+  res.send("🚀 Servidor funcionando correctamente sin Stealth");
 });
 
 // Endpoint de Scraping
@@ -76,7 +62,7 @@ app.post("/scrape", async (req, res) => {
   }
 });
 
-// Endpoint para exportar a Excel
+// Endpoint para exportar a Excel (sin cambios)
 app.post("/export-excel", (req, res) => {
   const { data } = req.body;
 
