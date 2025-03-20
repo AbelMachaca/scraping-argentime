@@ -16,7 +16,7 @@
     "express": "^4.21.2",
     "puppeteer": "^24.4.0",
     "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "puppeteer-extra-plugin-stealth": "^2.10.2",
     "vercel": "^41.4.1",
     "xlsx": "^0.18.5"
   }
