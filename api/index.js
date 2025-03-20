@@ -1,23 +1,31 @@
 const express = require("express");
 const cors = require("cors");
 const puppeteer = require("puppeteer-extra");
-const chromium = require("chrome-aws-lambda"); // Asegúrate de incluir esta línea
+const chromium = require("chrome-aws-lambda");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const xlsx = require("xlsx");
 
-puppeteer.use(StealthPlugin());
+// Inicializamos el plugin stealth y desactivamos las evasiones problemáticas
+const stealthPlugin = StealthPlugin();
+stealthPlugin.enabledEvasions.delete("chrome.app");
+stealthPlugin.enabledEvasions.delete("chrome.csi");
+puppeteer.use(stealthPlugin);
 
 const app = express();
 app.use(express.json());
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
 // Ruta de prueba
 app.get("/", (req, res) => {
-  res.send("🚀 Servidor funcionando correctamente con CORS y chrome-aws-lambda");
+  res.send(
+    "🚀 Servidor funcionando correctamente con CORS y chrome-aws-lambda"
+  );
 });
 
 // Endpoint de Scraping
@@ -57,7 +65,9 @@ app.post("/scrape", async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error("Error en /scrape:", error);
-    res.status(500).json({ error: "Error al obtener datos", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Error al obtener datos", details: error.message });
   }
 });
 
