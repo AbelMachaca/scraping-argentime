@@ -31,23 +31,12 @@ app.post("/scrape", async (req, res) => {
   try {
     // 1) Configurar opciones de lanzamiento según entorno
     let launchOptions;
-    if (process.env.NODE_ENV === "production") {
-      // En producción (Render, Vercel)
-      launchOptions = {
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath,
-        headless: chromium.headless,
-      };
-      console.log("🛰️ Launching chrome-aws-lambda");
-    } else {
-      // En local
-      launchOptions = {
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      };
-      console.log("💻 Launching local puppeteer");
-    }
+       // Usamos siempre Puppeteer puro con su Chromium incorporado
+    launchOptions = {
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    };
+    console.log("🚀 Launching Puppeteer with bundled Chromium");
     console.log("🔧 launchOptions:", launchOptions);
 
     browser = await puppeteer.launch(launchOptions);
