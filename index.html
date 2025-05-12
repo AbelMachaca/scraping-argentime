@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h3>Probar /scrape</h3>
+    <input id="url" placeholder="https://..." size="40"/>
+    <button onclick="doScrape()">Scrapear</button>
+    <pre id="out"></pre>
+
+    <script>
+      async function doScrape() {
+        const url = document.getElementById('url').value;
+        const res = await fetch('http://localhost:4000/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        document.getElementById('out').textContent = await res.text();
+      }
+    </script>
+  </body>
+</html>
