@@ -1,7 +1,8 @@
 // api/index.js
 const express = require("express");
 const cors = require("cors");
-const puppeteer = require("puppeteer");
+const axios = require("axios");
+const cheerio = require("cheerio");
 const xlsx = require("xlsx");
 
 const app = express();
@@ -16,72 +17,71 @@ app.use(
 
 // Ruta de prueba
 app.get("/", (_req, res) => {
-  res.send("🚀 Servidor funcionando correctamente");
+  res.send("🚀 Servidor funcionando correctamente con Axios + Cheerio");
 });
 
-// Endpoint de Scraping con Puppeteer (texto limpio + computedStyle)
+// /scrape con axios + cheerio
 app.post("/scrape", async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: "URL requerida" });
 
-  let browser;
   try {
-    console.log("🌐 Navegando a:", url);
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
-
-    const data = await page.evaluate(() => {
-      // 1) Title y bajada solo como texto (sin etiquetas)
-      const titleEl =
-        document.querySelector(".sc-6ab2981a-2 span") ||
-        document.querySelector(".sc-e612944f-4");
-      const title = titleEl ? titleEl.textContent.trim() : "No encontrado";
-
-      const bajadaEl =
-        document.querySelector(".sc-c214f8c1-16") ||
-        document.querySelector(".sc-2af63f48-19");
-      const bajada = bajadaEl ? bajadaEl.textContent.trim() : "No encontrado";
-
-      // 2) Imagen desde background-image o <img>
-      let imageUrl = null;
-      const imageDiv = document.querySelector('[class^="sc-6ab2981a-0"]');
-      if (imageDiv) {
-        const bg = getComputedStyle(imageDiv).backgroundImage;
-        const m = bg.match(/url\(["']?(.*?)["']?\)/);
-        if (m) imageUrl = m[1];
-      }
-      if (!imageUrl) {
-        const img = document.querySelector(".sc-e65546dd-2 img");
-        const src = img?.getAttribute("src");
-        if (src) imageUrl = src.startsWith("http") ? src : window.location.origin + src;
-        else imageUrl = "No encontrado";
-      }
-
-      // 3) Link actual
-      const link = window.location.href;
-
-      return { title, bajada, link, image: imageUrl };
+    console.log("🌐 Fetching URL:", url);
+    const { data: html } = await axios.get(url, {
+      timeout: 15000,
+      headers: { "User-Agent": "Mozilla/5.0" },
     });
 
-    console.log("✅ Datos extraídos:", data);
-    res.json(data);
+    const $ = cheerio.load(html);
+
+    const titleEl =
+      $(".sc-6ab2981a-2 span").first() ||
+      $(".sc-e612944f-4").first();
+    const title = titleEl.length
+      ? titleEl.text().trim()
+      : "No encontrado";
+
+    const bajadaEl =
+      $(".sc-c214f8c1-16").first() ||
+      $(".sc-2af63f48-19").first();
+    const bajada = bajadaEl.length
+      ? bajadaEl.text().trim()
+      : "No encontrado";
+
+    let imageUrl = null;
+    const imageDiv = $('[class^="sc-6ab2981a-0"]');
+    if (imageDiv.length) {
+      const style = imageDiv.attr("style") || "";
+      const m = style.match(/background-image:\s*url\(["']?(.*?)["']?\)/i);
+      if (m && m[1]) {
+        imageUrl = m[1].startsWith("http")
+          ? m[1]
+          : new URL(m[1], url).href;
+      }
+    }
+    if (!imageUrl) {
+      const imgTag = $(".sc-e65546dd-2 img").first();
+      const rawSrc = imgTag.attr("src");
+      imageUrl = rawSrc
+        ? rawSrc.startsWith("http")
+          ? rawSrc
+          : new URL(rawSrc, url).href
+        : "No encontrado";
+    }
+
+    const result = { title, bajada, link: url, image: imageUrl };
+    console.log("✅ Scrape result:", result);
+    res.json(result);
 
   } catch (err) {
-    console.error("🔥 Error en /scrape:", err);
-    res.status(500).json({ error: "Error al obtener datos", details: err.message });
-  } finally {
-    if (browser) {
-      await browser.close();
-      console.log("👋 Browser cerrado");
-    }
+    console.error("🔥 Error en /scrape:", err.message);
+    res
+      .status(500)
+      .json({ error: "Error al obtener datos", details: err.message });
   }
 });
 
-// Endpoint para exportar a Excel
+// /export-excel igual que antes
 app.post("/export-excel", (req, res) => {
   const { data } = req.body;
   if (!Array.isArray(data) || data.length === 0) {
@@ -110,10 +110,12 @@ app.post("/export-excel", (req, res) => {
   });
 });
 
-// Arranque local / Render
+// Arranque
 if (require.main === module) {
   const PORT = process.env.PORT || 4000;
-  app.listen(PORT, () => console.log(`🚀 Servidor escuchando en :${PORT}`));
+  app.listen(PORT, () =>
+    console.log(`🚀 Servidor escuchando en http://localhost:${PORT}`)
+  );
 }
 
 module.exports = app;
